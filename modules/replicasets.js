@@ -1,8 +1,13 @@
 var mongodb = require('/usr/local/lib/node_modules/mongodb')
 var connectNum = require('os').cpus().length
-var server = new mongodb.Server('127.0.0.1', 27017, {auto_reconnect: true}, connectNum)
-var dbName = 'test'
-var db = new mongodb.Db(dbName, server)
+var ReplSet= mongodb.ReplSetServers
+var Db = mongodb.Db
+var Server = mongodb.Server
+var replSet = new ReplSet([
+	new Server('127.0.0.1', 30000),
+	new Server('127.0.0.1', 30001)
+], {rs_name: 'rs0'});
+var db = new Db('test', replSet)
 
 var isInit = false, queue = []
 
@@ -11,7 +16,7 @@ db.open(function(err, db) {
 		console.log(err)
 		return
 	}
-	console.log('connected to database :: ' + dbName)
+	console.log('connected to database :: ' + 'test')
 	isInit = true
 	for (var i=0; i<queue.length; i++) {
 		queue[i].fn.apply(null, queue[i].args)

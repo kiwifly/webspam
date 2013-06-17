@@ -27,15 +27,15 @@ function genUserCata() {
 	})
 */
 	var map = function(){
-		console.log(typeof emit, emit)
-		emit(this.uid, {uid: this.uid, cata: this.cata});
+		var key = {uid: this.uid, cata: this.cata};
+		emit(key, {count: 1});
 	}
 	var reduce = function(k, val) {
-		console.log(k, val);
 		return Array.sum(val);
 	}
 	db.mapReduce('user_visit', map, reduce, function(err, res){
-		console.log(err, res.length)
+		console.log(err, res.length, res[0])
+		db.insert('cata_preprocess', res, function(){console.log('congratulation~~~')})			
 	})
 }
 
@@ -99,7 +99,7 @@ function bayesian() {
 			var n = res[i].normal ? res[i].normal : 0;
 			var bayes_ratio = spam_ratio * s / (spam_ratio * s + norm_ratio * n);
 			if (isNaN(bayes_ratio)) bayes_ratio = 0; 
-			db.update('bayesian', {'cata': res[i].cata}, {'bayes_r': bayes_ratio.toFixed(2)})
+			db.update('bayesian', {'cata': res[i].cata}, {'$set':{'bayes_r': bayes_ratio.toFixed(2)}})
 		}
 	})
 }
@@ -118,10 +118,10 @@ function select(){
 			for (var i=0, l=res.length; i<l; i++) {
 				res[i].cata in cata ? cata[res[i].cata] ++ : cata[res[i].cata] = 1;
 			}
-			db.update('bayesian', {'cata': 'all'}, {'spam': res.length})
-			db.update('bayesian', {'cata': 'visitors'}, {'spam': spamers.length})
+			db.update('bayesian', {'cata': 'all'}, {'$set':{'spam': res.length}})
+			db.update('bayesian', {'cata': 'visitors'}, {'$set':{'spam': spamers.length}})
 			for (var c in cata) {
-				db.update('bayesian', {'cata': c}, {'spam': (cata[c]*100/res.length).toFixed(2)})
+				db.update('bayesian', {'cata': c}, {'$set':{'spam': (cata[c]*100/res.length).toFixed(2)}})
 			}
 		});
 		var normals = [];
@@ -132,10 +132,10 @@ function select(){
 				if (normals.indexOf(res[i].uid) == -1)
 					normals.push(res[i].uid)
 			}
-			db.update('bayesian', {'cata': 'all'}, {'normal': res.length})
-			db.update('bayesian', {'cata': 'visitors'}, {'normal': normals.length})
+			db.update('bayesian', {'cata': 'all'}, {'$set':{'normal': res.length}})
+			db.update('bayesian', {'cata': 'visitors'}, {'$set':{'normal': normals.length}})
 			for (var c in cata) {
-				db.update('bayesian', {'cata': c}, {'normal': (cata[c]*100/res.length).toFixed(2)})
+				db.update('bayesian', {'cata': c}, {'$set':{'normal': (cata[c]*100/res.length).toFixed(2)}})
 			}
 		});
 	});
