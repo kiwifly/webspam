@@ -53,7 +53,7 @@ function analyzeLog() {
 	for (var i=0, l=logArr.length; i<l; i++) {
 		var ret = analyzeLine(logArr[i]);
 		if (ret)
-			db.update('user_visit', ret.query, {'$push': {'items': ret.items}, '$inc': {'num': 1}});
+			db.update('user_vs', ret, {'$inc': {'num': 1}});
 	//	analyzeLine(logArr[i])
 	}
 	console.log('Spend time: ' + (new Date - ss));
@@ -67,29 +67,25 @@ function analyzeLine(line) {
 	if (arr.length == 1) {
 		return false;
 	}
-	var ret = {'query':{}, 'items':{}};
+	var ret = {};
 	try{
-		ret['query']['uid'] = arr[9].split('santorini_mm=')[1].split(';')[0].split('%3b')[0];	//userId
+		ret['uid'] = arr[9].split('santorini_mm=')[1].split(';')[0].split('%3b')[0];	//userId
 	}catch(e){
 		console.log('Error:', line, arr, arr[9])
 	}
 	getCata(arr[3], ret);	//type & catalog & method
-	ret['items']['ip'] = arr[0].split('[')[1];	//ip
-	ret['items']['vtime'] = arr[2].split(' ')[0];	//visit time
-	ret['items']['refer'] = arr[6]; //refer
-	ret['items']['url'] = arr[3];	//url
 	return ret;
 }
 //generate type & catalog & method by url
 function getCata(url, ret) {
 	var opts = url.split(' ');
 	if (opts[1].indexOf('/aj/') > -1 || opts[1].indexOf('/aw/') > -1 || opts[0] == 'POST') {
-		ret['query']['type'] = 'ajax';
+		ret['type'] = 'ajax';
 		/*replace('http://www.meilishuo.com', '') is to filter spam action... */
-		ret['query']['cata'] = opts[1].replace('/aj/', '').replace('/aw/', '').replace('http://www.meilishuo.com', '').split('?')[0];
+		ret['cata'] = opts[1].replace('/aj/', '').replace('/aw/', '').replace('http://www.meilishuo.com', '').split('?')[0];
 	} else {
-		ret['query']['type'] = 'page';
-		ret['query']['cata'] = opts[1].split('/')[1].split('?')[0];
+		ret['type'] = 'page';
+		ret['cata'] = opts[1].split('/')[1].split('?')[0];
 	}
-	ret['query']['method'] = opts[0];
+	ret['method'] = opts[0];
 }

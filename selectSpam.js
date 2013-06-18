@@ -14,6 +14,33 @@ function selectSpam() {
 }
 
 function genUserCata() {
+	var bayes = {};
+	db.find('bayesian', {}, {'_id':0}, function(res){
+		for (var i=0, l=res.length; i<l; i++) {
+			bayes[res[i].cata] = res[i].bayes_r;
+		}
+		db.distinct('user_visit', 'uid', {}, function(res){
+			console.log(res.length)
+			var step = 1000, l = res.length, i = 0;
+			while(i<l) {
+				setTimeout(function(i){
+					for (var t=0; t<step; t++, i++) {
+						if (i>=l) return;
+						db.find('user_visit', {'uid':res[i]}, {'uid':1, 'cata':1, 'num':1}, function(res){
+							var total = 0;
+							var result = 0;
+							for (var j=res.length-1; j>=0; j--) {
+								total += res[j].num;
+								result += bayes[res[j].cata] * res[j].num;
+							}
+							db.update('user_state', {'uid':res[0].uid}, {'$set':{'level':result/total}});
+						})
+					}
+				}(i), 1000*i);
+				i = i + step;
+			}
+		})
+	});
 /*
 	var query = {
 		'keys': ['uid', 'cata'],
@@ -26,6 +53,7 @@ function genUserCata() {
 		console.log(err, res)
 	})
 */
+/*
 	var map = function(){
 		var key = {uid: this.uid, cata: this.cata};
 		emit(key, {count: 1});
@@ -37,7 +65,9 @@ function genUserCata() {
 		console.log(err, res.length, res[0])
 		db.insert('cata_preprocess', res, function(){console.log('congratulation~~~')})			
 	})
+*/
 }
+
 
 
 function judge() {

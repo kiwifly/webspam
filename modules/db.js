@@ -97,9 +97,24 @@ function mapReduce(coll, map, reduce, nextFn) {
 	collection.mapReduce(map, reduce, {out:{inline: 1}}, nextFn)
 }
 
+function distinct(coll, key, query, nextFn) {
+	if (!isInit) {
+		queue.push({'fn': distinct, 'args': arguments})
+		return
+	}
+	var collection = db.collection(coll)
+	collection.distinct(key, query, function(err, docs){
+		if (err) {
+			console.log(err)
+			return
+		}
+		nextFn && nextFn(docs)
+	})
+}
 exports.insert = insert
 exports.find = find
 exports.findOne = findOne
 exports.update = update
 exports.group = group
 exports.mapReduce = mapReduce
+exports.distinct = distinct 
