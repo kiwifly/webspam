@@ -1,17 +1,5 @@
 var db = require('./modules/db.js');
 
-var c1 = [
-  [ 'b071248bb1d31354627a8f62319c34b1', 11 ],
-  [ '155b199744d458a878396166496a0d62', 7 ],
-  [ '4cf89186b4a6aa4a5d7f7e342860dce3', 8 ],
-  [ '166c953ee9604a511330283cb312e29e', 7 ],
-  [ '207cb4a2da86086003c4684950879f5b', 7 ],
-  [ '59d1015367560ac2121e43100cb51163', 9 ],
-  [ '91438d8cc6a9bcdef3470813cde0f245', 7 ],
-  [ '23f43e6f928135c13b399e05d1d9ad6e', 7 ],
-  [ '8e4c0325f2aff4dd76b4dc2f8f4316fc', 7 ],
-  [ 'a5798230a7823ac3ec2f9efcdce15a51', 7 ]
-];
 var c2 = [
   [ '44b52d153db36f9a695e9ae2f92c7386', 9 ],
   [ '16b5f4815d2419addfdb980a4d3ad682', 10 ],
@@ -38,40 +26,6 @@ function vectSim(v1, v2) {
     return parseFloat(sim.toFixed(4));
 }
 
-function testCluster(c1, c2) {
-	var getV = function(c, v, cbk){
-		for (var i=c.length-1; i>=0; i--) {
-			db.find('user_vect', {'uid':c[i][0]}, {'_id':0}, function(doc){
-				v[doc[0].uid] = doc[0].vect;
-				count--;
-				if(count<=0) cbk();
-			})
-		}
-	}
-	var cbk = function(){
-		for(var i in v1) {
-			var flag = 0;
-			for(var j in v2) {
-				var sim = vectSim(v1[i], v2[j]);
-				if(sim > 0.1){
-					flag = 1;
-					break;
-				//	console.log(i, j, sim);
-				}
-			}
-			if (flag == 0) {
-				console.log(i)
-				ret.push(i)
-			}
-		}
-		for (var j in v2) ret.push(j)
-		console.log(ret)
-	}
-	getV(c1, v1, cbk);
-	getV(c2, v2, cbk);
-}
-//testCluster(c1, c2);
-
 var clus = {};
 function genCluster(c2) {
 	var v2 = {}, k = 10;
@@ -80,7 +34,33 @@ function genCluster(c2) {
 		db.find('user_vect', {'uid':c2[i][0]}, {'_id':0}, function(doc){
 			v2[doc[0].uid] = doc[0].vect;
 			k--;
-			if(k<=0) cluster();
+			if(k<=0) otherCluster();
+		})
+	}
+	var count = function(arr){
+		var ret = 0;
+		for(var i=arr.length-1; i>=0; i--){
+			if(arr[i]!=0) ret++;
+		}
+		return ret;
+	}
+
+	var otherCluster = function(){
+		db.find('cluster', {'type':'other'}, {'_id':0}, function(res){
+			var uids = res[0].uids;
+			for (var i=0,l=uids.length; i<l; i++) {
+				db.find('user_vect', {'uid':uids[i][0]}, {'_id':0}, function(doc){
+					var flag = 0;
+					for (var k in v2) {
+						var s = vectSim(doc[0].vect, v2[k]);
+						if (s > 0.1) flag = 1;
+					}
+					if (flag == 0 && count(doc[0].vect) > 4) {
+						console.log([doc[0].uid, count(doc[0].vect)]);
+						v2[doc[0].uid] = doc[0].vect;
+					}
+				})
+			}	
 		})
 	}
 

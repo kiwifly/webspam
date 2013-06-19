@@ -22,7 +22,12 @@ var c2 = [
   [ 'e3494efdd31c6934d94e0aeac7ddf86e', 7 ],
   [ 'bf6fd23a4f9efe76a2e477e5ad3139de', 13 ],
   [ 'a5798230a7823ac3ec2f9efcdce15a51', 7 ],
-  [ '2e2f88005ff8f714ee8fba456474f9d3', 7 ]
+  [ '2e2f88005ff8f714ee8fba456474f9d3', 7 ],
+  [ 'f4cb061814c85ac3a6cdfa2b99bc603e', 5 ],
+  [ '9bf4a539801453e72fb1b33bef3398c0', 5 ],
+  [ 'a44ce34ca61f003aa90cb2f4db1559c5', 6 ],
+  [ 'd432a92bcc0483f9aafc378e80d3973a', 6 ],
+  [ '66db9139417f4998dd87eff168d6be02', 8 ]
 ];
 
 var v1 = {}, v2 = {}, count=20, ret = [];
@@ -74,7 +79,7 @@ function testCluster(c1, c2) {
 
 var clus = {};
 function genCluster(c2) {
-	var v2 = {}, k = 10;
+	var v2 = {}, k = c2.length;
 	for (var i=c2.length-1; i>=0; i--) {
 		clus[c2[i][0]] = [];
 		db.find('user_vect', {'uid':c2[i][0]}, {'_id':0}, function(doc){
@@ -96,7 +101,7 @@ function genCluster(c2) {
 							pos = k;
 						}
 					}
-					if (sim > 0.8) {
+					if (sim > 0.7) {
 						clus[pos].push([res[i].uid, sim])
 						db.update('cluster', {'type':pos}, {'$push':{'uids':[res[i].uid, sim]}})
 					} else {
