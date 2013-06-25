@@ -1,15 +1,15 @@
 var db = require('../modules/db.js');
 
 var vectors = [];
-db.distinct('bayesian', 'cata', {}, function(catas){
+db.distinct('user_vs', 'cata', {}, function(catas){
 	vectors = catas.sort();
-	db.distinct('user_state', 'uid', {}, function(res){
+	db.distinct('user_vs', 'uid', {}, function(res){
 		var step = 1000, l = res.length, i = 0;
 		while(i<l) {
 			setTimeout(function(i){
 				for (var t=0; t<step; t++, i++) {
 					if (i>=l) return;
-					db.find('user_visit', {'uid':res[i]}, {'uid':1, 'cata':1, 'num':1}, function(res){
+					db.find('user_vs', {'uid':res[i]}, {'uid':1, 'cata':1, 'num':1}, function(res){
 						var total = 0, vec = [], vecs = {};
 						for (var j=res.length-1; j>=0; j--) {
 							if (res[j].cata == 'all' || res[j].cata == 'visitors') continue;
@@ -21,9 +21,10 @@ db.distinct('bayesian', 'cata', {}, function(catas){
 							if (!(vectors[k] in vecs)) 
 								vec.push(0);
 							else
-								vec.push(parseFloat((vecs[vectors[k]]/total).toFixed(3)));
+						//		vec.push(parseFloat((vecs[vectors[k]]/total).toFixed(3)));
+								vec.push(vecs[vectors[k]])
 						}
-						db.update('user_vect', {'uid':res[0].uid}, {'$set':{'vect':vec}});
+						db.update('user_vect', {'uid':res[0].uid}, {'$set':{'vect':vec, 'total':total}});
 					})
 				}
 			}(i), 1000*i);
